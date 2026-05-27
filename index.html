@@ -19,17 +19,17 @@
         <p>Select your role to continue</p>
       </div>
       <div class="login-form">
-        <!-- Admin Password (moved above name input) -->
-        <div class="form-group" id="admin-password-group" style="display: none;">
-          <label for="admin-password">Admin Password <span class="required">*</span></label>
-          <input type="password" class="form-input" id="admin-password" placeholder="Enter admin password">
-          <span style="font-size: 0.72rem; color: var(--text-muted);">Required for administrator access</span>
-        </div>
-
         <div class="form-group">
           <label for="login-name">Your Name <span class="required">*</span></label>
           <input type="text" class="form-input" id="login-name" placeholder="Enter your full name">
           <span style="font-size: 0.72rem; color: var(--text-muted); margin-top: 4px; display: block;" id="login-name-instruction">Please enter your name followed by your admission number (e.g., John Doe 12345)</span>
+        </div>
+
+        <!-- Admin Password (placed below name input) -->
+        <div class="form-group" id="admin-password-group" style="display: none;">
+          <label for="admin-password">Admin Password <span class="required">*</span></label>
+          <input type="password" class="form-input" id="admin-password" placeholder="Enter admin password">
+          <span style="font-size: 0.72rem; color: var(--text-muted);">Required for administrator access</span>
         </div>
 
         <div class="role-selector">
