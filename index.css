@@ -3,48 +3,48 @@
 
 /* ===== Design Tokens ===== */
 :root {
-  /* Background — all solid */
-  --bg-primary: #0a0a12;
-  --bg-secondary: #111127;
-  --bg-card: #161633;
-  --bg-card-hover: #1c1c42;
-  --bg-sidebar: #0c0c1e;
-  --bg-input: #191940;
-  --bg-overlay: rgba(0, 0, 0, 0.65);
+  /* Background — all solid dark slate/charcoal */
+  --bg-primary: #09090b;
+  --bg-secondary: #121214;
+  --bg-card: #18181b;
+  --bg-card-hover: #202024;
+  --bg-sidebar: #0f0f11;
+  --bg-input: #1c1c1f;
+  --bg-overlay: rgba(0, 0, 0, 0.75);
 
-  /* Accent Colors */
-  --accent-primary: #7c3aed;
-  --accent-primary-hover: #6d28d9;
-  --accent-primary-glow: rgba(124, 58, 237, 0.3);
-  --accent-secondary: #a78bfa;
+  /* Accent Colors — refined dark corporate slate */
+  --accent-primary: #27272a;
+  --accent-primary-hover: #3f3f46;
+  --accent-primary-glow: rgba(255, 255, 255, 0.05);
+  --accent-secondary: #a1a1aa;
 
   /* Status Colors — solid */
   --status-pending: #f59e0b;
-  --status-pending-bg: #2a2210;
+  --status-pending-bg: #1c150b;
   --status-progress: #3b82f6;
-  --status-progress-bg: #121d30;
+  --status-progress-bg: #0c1524;
   --status-resolved: #10b981;
-  --status-resolved-bg: #0f2420;
+  --status-resolved-bg: #0b1c16;
   --status-rejected: #ef4444;
-  --status-rejected-bg: #2a1212;
+  --status-rejected-bg: #1f0b0b;
 
   /* Priority Colors */
-  --priority-low: #6ee7b7;
+  --priority-low: #a1a1aa;
   --priority-medium: #fbbf24;
-  --priority-high: #fb923c;
-  --priority-critical: #f87171;
+  --priority-high: #f97316;
+  --priority-critical: #ef4444;
 
   /* Text */
-  --text-primary: #f1f0f8;
-  --text-secondary: #9896b0;
-  --text-muted: #5e5c76;
-  --text-accent: #c4b5fd;
+  --text-primary: #f4f4f5;
+  --text-secondary: #a1a1aa;
+  --text-muted: #52525b;
+  --text-accent: #e4e4e7;
 
   /* Borders — solid */
-  --border-subtle: #1e1e45;
-  --border-card: #25254d;
-  --border-input: #2c2c5c;
-  --border-focus: #5b35a8;
+  --border-subtle: #1e1e21;
+  --border-card: #27272a;
+  --border-input: #27272a;
+  --border-focus: #52525b;
 
   /* Spacing */
   --sidebar-width: 260px;
@@ -194,7 +194,7 @@ a {
 
 .role-option.selected {
   border-color: var(--accent-primary);
-  background: #1a1540;
+  background: var(--accent-primary);
 }
 
 .role-option input[type="radio"] {
@@ -355,13 +355,13 @@ a {
 
 .nav-item:hover {
   color: var(--text-primary);
-  background: #1a1a3e;
+  background: var(--bg-card-hover);
   border-color: var(--border-subtle);
 }
 
 .nav-item.active {
   color: var(--text-primary);
-  background: #1e1650;
+  background: var(--accent-primary);
   border-color: var(--border-card);
 }
 
@@ -407,7 +407,7 @@ a {
   gap: 10px;
   padding: 10px 12px;
   border-radius: var(--radius-sm);
-  background: #12122e;
+  background: var(--bg-card);
   border: 1px solid var(--border-subtle);
 }
 
@@ -577,7 +577,7 @@ a {
   margin-bottom: 14px;
 }
 
-.stat-card.total .stat-icon { background: #1e1650; }
+.stat-card.total .stat-icon { background: var(--accent-primary); }
 .stat-card.pending .stat-icon { background: var(--status-pending-bg); }
 .stat-card.progress .stat-icon { background: var(--status-progress-bg); }
 .stat-card.resolved .stat-icon { background: var(--status-resolved-bg); }
@@ -678,7 +678,7 @@ a {
 .priority-bar-track {
   height: 8px;
   border-radius: 4px;
-  background: #1a1a3e;
+  background: var(--bg-card-hover);
   overflow: hidden;
 }
 
@@ -706,14 +706,14 @@ a {
   gap: 14px;
   padding: 12px 14px;
   border-radius: var(--radius-sm);
-  background: #131330;
+  background: var(--bg-secondary);
   border: 1px solid transparent;
   transition: all var(--transition-fast);
   cursor: pointer;
 }
 
 .recent-item:hover {
-  background: #1a1a42;
+  background: var(--bg-card-hover);
   border-color: var(--border-subtle);
 }
 
@@ -779,7 +779,7 @@ a {
 .badge.in-progress {
   background: var(--status-progress-bg);
   color: var(--status-progress);
-  border: 1px solid #1a2a48;
+  border: 1px solid var(--border-subtle);
 }
 
 .badge.resolved {
@@ -866,8 +866,8 @@ a {
 .form-select:focus,
 .form-textarea:focus {
   border-color: var(--border-focus);
-  box-shadow: 0 0 0 3px #1e1650;
-  background: #1a1a48;
+  box-shadow: 0 0 0 3px var(--border-focus);
+  background: var(--bg-card-hover);
 }
 
 .form-select {
@@ -880,7 +880,7 @@ a {
 }
 
 .form-select option {
-  background: #1a1a3e;
+  background: var(--bg-card-hover);
   color: var(--text-primary);
 }
 
@@ -928,14 +928,14 @@ a {
 }
 
 .btn-secondary {
-  background: #1e1650;
+  background: var(--accent-primary);
   color: var(--accent-secondary);
   border: 1px solid var(--border-card);
 }
 
 .btn-secondary:hover {
-  background: #2a1f65;
-  border-color: #3a3570;
+  background: var(--bg-card-hover);
+  border-color: var(--border-card);
 }
 
 .btn-sm {
@@ -1006,7 +1006,7 @@ a {
 
 .search-box input:focus {
   border-color: var(--border-focus);
-  box-shadow: 0 0 0 3px #1e1650;
+  box-shadow: 0 0 0 3px var(--border-focus);
 }
 
 .filter-select {
@@ -1027,7 +1027,7 @@ a {
 }
 
 .filter-select option {
-  background: #1a1a3e;
+  background: var(--bg-card-hover);
 }
 
 .filter-select:focus {
@@ -1062,7 +1062,7 @@ a {
 }
 
 .data-table tbody tr:hover {
-  background: #161640;
+  background: var(--bg-secondary);
 }
 
 .table-id {
@@ -1107,7 +1107,7 @@ a {
 }
 
 .table-actions .btn-icon:hover {
-  background: #1e1650;
+  background: var(--accent-primary);
   border-color: var(--border-subtle);
   color: var(--accent-secondary);
 }
@@ -1189,7 +1189,7 @@ a {
   width: 34px;
   height: 34px;
   border-radius: 8px;
-  background: #1e1650;
+  background: var(--accent-primary);
   border: 1px solid var(--border-subtle);
   color: var(--text-secondary);
   cursor: pointer;
@@ -1248,7 +1248,7 @@ a {
   color: var(--text-secondary);
   line-height: 1.7;
   padding: 14px;
-  background: #131330;
+  background: var(--bg-secondary);
   border-radius: var(--radius-sm);
   border: 1px solid var(--border-subtle);
 }
@@ -1368,7 +1368,7 @@ a {
 .toast.error { border-color: #3a1818; }
 .toast.error .toast-icon { color: var(--status-rejected); }
 
-.toast.info { border-color: #1a2a48; }
+.toast.info { border-color: var(--border-subtle); }
 .toast.info .toast-icon { color: var(--status-progress); }
 
 .toast.warning { border-color: #3d3418; }
