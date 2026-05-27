@@ -1,15 +1,20 @@
-// ===== GrievX — Grievance Management System =====
+// ===== Griever — Grievance Management System =====
 // SPA Router, CRUD, Role-Based Access, Dashboard, Admin Panel, Toast Notifications
 
 (function () {
   'use strict';
 
   // ===== Data Store =====
-  const STORAGE_KEY = 'grievx_grievances';
-  const SESSION_KEY = 'grievx_session';
+  const STORAGE_KEY = 'griever_grievances';
+  const SESSION_KEY = 'griever_session';
 
   function loadGrievances() {
     try {
+      // Migrate legacy GrievX data if present to prevent data loss
+      if (!localStorage.getItem(STORAGE_KEY) && localStorage.getItem('grievx_grievances')) {
+        localStorage.setItem(STORAGE_KEY, localStorage.getItem('grievx_grievances'));
+        localStorage.removeItem('grievx_grievances');
+      }
       return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
     } catch {
       return [];

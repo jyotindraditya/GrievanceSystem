@@ -143,7 +143,7 @@ a {
   justify-content: center;
   font-size: 28px;
   margin: 0 auto 16px;
-  box-shadow: 0 4px 20px var(--accent-primary-glow);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
 }
 
 .login-card .login-header h2 {
@@ -917,12 +917,12 @@ a {
 .btn-primary {
   background: var(--accent-primary);
   color: white;
-  box-shadow: 0 4px 15px var(--accent-primary-glow);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .btn-primary:hover {
   background: #8b5cf6;
-  box-shadow: 0 6px 25px rgba(124, 58, 237, 0.4);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
   transform: translateY(-1px);
 }
 
