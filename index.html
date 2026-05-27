@@ -334,48 +334,113 @@
           <p>Manage and respond to all submitted grievances</p>
         </div>
 
-        <div class="glass-card">
-          <div class="table-controls">
-            <div class="search-box">
-              <span class="search-icon">🔍</span>
-              <input type="text" id="admin-search" placeholder="Search grievances...">
-            </div>
-            <select class="filter-select" id="admin-filter-status">
-              <option value="">All Status</option>
-              <option value="Pending">Pending</option>
-              <option value="In Progress">In Progress</option>
-              <option value="Resolved">Resolved</option>
-              <option value="Rejected">Rejected</option>
-            </select>
-            <select class="filter-select" id="admin-filter-priority">
-              <option value="">All Priority</option>
-              <option value="Low">Low</option>
-              <option value="Medium">Medium</option>
-              <option value="High">High</option>
-              <option value="Critical">Critical</option>
-            </select>
-          </div>
+        <!-- Admin Sub-tabs -->
+        <div class="admin-tabs">
+          <button class="admin-tab active" data-admin-tab="grievances">📋 Grievances</button>
+          <button class="admin-tab" data-admin-tab="database">🛡️ Admin Database</button>
+        </div>
 
-          <table class="data-table" id="admin-table">
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Title</th>
-                <th>Submitted By</th>
-                <th>Category</th>
-                <th>Priority</th>
-                <th>Status</th>
-                <th>Date</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody id="admin-tbody">
-            </tbody>
-          </table>
-          <div class="empty-state" id="no-admin-msg" style="display:none;">
-            <div class="empty-icon">📭</div>
-            <h4>No grievances found</h4>
-            <p>Try adjusting your search or filters</p>
+        <!-- Grievances Sub-view -->
+        <div class="admin-subview" id="admin-subview-grievances">
+          <div class="glass-card">
+            <div class="table-controls">
+              <div class="search-box">
+                <span class="search-icon">🔍</span>
+                <input type="text" id="admin-search" placeholder="Search grievances...">
+              </div>
+              <select class="filter-select" id="admin-filter-status">
+                <option value="">All Status</option>
+                <option value="Pending">Pending</option>
+                <option value="In Progress">In Progress</option>
+                <option value="Resolved">Resolved</option>
+                <option value="Rejected">Rejected</option>
+              </select>
+              <select class="filter-select" id="admin-filter-priority">
+                <option value="">All Priority</option>
+                <option value="Low">Low</option>
+                <option value="Medium">Medium</option>
+                <option value="High">High</option>
+                <option value="Critical">Critical</option>
+              </select>
+            </div>
+
+            <table class="data-table" id="admin-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Title</th>
+                  <th>Submitted By</th>
+                  <th>Category</th>
+                  <th>Priority</th>
+                  <th>Status</th>
+                  <th>Date</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="admin-tbody">
+              </tbody>
+            </table>
+            <div class="empty-state" id="no-admin-msg" style="display:none;">
+              <div class="empty-icon">📭</div>
+              <h4>No grievances found</h4>
+              <p>Try adjusting your search or filters</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Admin Database Sub-view -->
+        <div class="admin-subview" id="admin-subview-database" style="display: none;">
+          <div class="admin-db-grid">
+            <!-- Left: Registered Admins List -->
+            <div class="glass-card">
+              <div class="card-header">
+                <h3>🛡️ Administrator Accounts</h3>
+                <div class="search-box" style="max-width: 220px; flex: none;">
+                  <span class="search-icon">🔍</span>
+                  <input type="text" id="admin-db-search" placeholder="Search admins...">
+                </div>
+              </div>
+
+              <table class="data-table" id="admin-db-table">
+                <thead>
+                  <tr>
+                    <th>Username</th>
+                    <th>Created Date</th>
+                  </tr>
+                </thead>
+                <tbody id="admin-db-tbody">
+                  <!-- Rendered dynamically -->
+                </tbody>
+              </table>
+              <div class="empty-state" id="no-admin-db-msg" style="display:none;">
+                <div class="empty-icon">📭</div>
+                <h4>No admin accounts found</h4>
+              </div>
+            </div>
+
+            <!-- Right: Add New Admin Account -->
+            <div class="glass-card">
+              <div class="card-header">
+                <h3>👤 Register New Administrator</h3>
+              </div>
+              <form id="register-admin-form" autocomplete="off" novalidate>
+                <div class="form-grid" style="grid-template-columns: 1fr; gap: 16px;">
+                  <div class="form-group">
+                    <label for="reg-admin-username">Admin Username <span class="required">*</span></label>
+                    <input type="text" class="form-input" id="reg-admin-username" placeholder="Enter username" required>
+                  </div>
+                  <div class="form-group">
+                    <label for="reg-admin-password">Initial Password <span class="required">*</span></label>
+                    <input type="password" class="form-input" id="reg-admin-password" placeholder="Enter password (min 6 chars)" required>
+                  </div>
+                  <div class="form-group" style="margin-top: 8px;">
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">
+                      <span>➕</span> Register Account
+                    </button>
+                  </div>
+                </div>
+              </form>
+            </div>
           </div>
         </div>
       </section>

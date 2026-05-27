@@ -27,6 +27,40 @@
 
   let grievances = loadGrievances();
 
+  // ===== Admin Database Store =====
+  const ADMIN_STORAGE_KEY = 'griever_admins';
+
+  function loadAdmins() {
+    try {
+      let data = JSON.parse(localStorage.getItem(ADMIN_STORAGE_KEY));
+      if (!data || data.length === 0) {
+        data = [
+          {
+            username: 'Admin',
+            password: 'admin123',
+            createdAt: new Date().toISOString()
+          }
+        ];
+        localStorage.setItem(ADMIN_STORAGE_KEY, JSON.stringify(data));
+      }
+      return data;
+    } catch {
+      return [
+        {
+          username: 'Admin',
+          password: 'admin123',
+          createdAt: new Date().toISOString()
+        }
+      ];
+    }
+  }
+
+  function saveAdmins(data) {
+    localStorage.setItem(ADMIN_STORAGE_KEY, JSON.stringify(data));
+  }
+
+  let admins = loadAdmins();
+
   // ===== Session / Role Management =====
   let currentUser = null; // { name, role }
 
@@ -49,9 +83,6 @@
   function isAdmin() {
     return currentUser && currentUser.role === 'admin';
   }
-
-  // Admin password (change this to your desired password)
-  const ADMIN_PASSWORD = 'admin123';
 
   // ===== ID Generator =====
   function generateId() {
@@ -139,11 +170,12 @@
 
     const role = document.querySelector('input[name="role"]:checked').value;
 
-    // Validate admin password
+    // Validate admin password against the Admin Database
     if (role === 'admin') {
       const password = document.getElementById('admin-password').value;
-      if (password !== ADMIN_PASSWORD) {
-        showToast('Incorrect admin password. Access denied.', 'error');
+      const matchedAdmin = admins.find(a => a.username.toLowerCase() === name.toLowerCase() && a.password === password);
+      if (!matchedAdmin) {
+        showToast('Invalid administrator username or password. Access denied.', 'error');
         document.getElementById('admin-password').value = '';
         return;
       }
@@ -173,6 +205,7 @@
     document.getElementById('admin-password').value = '';
     adminPasswordGroup.style.display = 'none';
     if (loginNameInstruction) loginNameInstruction.style.display = 'block';
+    resetAdminTabs();
     // Reset role selection to Member
     roleOptions.forEach(o => o.classList.remove('selected'));
     document.getElementById('role-member-option').classList.add('selected');
@@ -249,7 +282,10 @@
     // Refresh view data
     if (viewName === 'dashboard') refreshDashboard();
     if (viewName === 'my-grievances') renderGrievancesTable();
-    if (viewName === 'admin') renderAdminTable();
+    if (viewName === 'admin') {
+      resetAdminTabs();
+      renderAdminTable();
+    }
   }
 
   navItems.forEach(item => {
@@ -530,6 +566,138 @@
   document.getElementById('admin-search').addEventListener('input', renderAdminTable);
   document.getElementById('admin-filter-status').addEventListener('change', renderAdminTable);
   document.getElementById('admin-filter-priority').addEventListener('change', renderAdminTable);
+
+  // ===== Admin Sub-tabs switching =====
+  const adminTabs = document.querySelectorAll('.admin-tab[data-admin-tab]');
+  const adminSubviews = document.querySelectorAll('.admin-subview');
+
+  adminTabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      adminTabs.forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+
+      const targetSubview = tab.dataset.adminTab;
+      adminSubviews.forEach(view => {
+        if (view.id === `admin-subview-${targetSubview}`) {
+          view.style.display = 'block';
+        } else {
+          view.style.display = 'none';
+        }
+      });
+
+      if (targetSubview === 'database') {
+        renderAdminsTable();
+      } else {
+        renderAdminTable();
+      }
+    });
+  });
+
+  // Reset admin subtabs to default (Grievances active) on logout or view switch
+  function resetAdminTabs() {
+    adminTabs.forEach(t => t.classList.remove('active'));
+    const defaultTab = document.querySelector('.admin-tab[data-admin-tab="grievances"]');
+    if (defaultTab) defaultTab.classList.add('active');
+
+    adminSubviews.forEach(view => {
+      if (view.id === 'admin-subview-grievances') {
+        view.style.display = 'block';
+      } else {
+        view.style.display = 'none';
+      }
+    });
+  }
+
+  // ===== Administrator Accounts Table =====
+  function renderAdminsTable() {
+    const search = document.getElementById('admin-db-search').value.toLowerCase().trim();
+    let filteredAdmins = [...admins];
+
+    if (search) {
+      filteredAdmins = filteredAdmins.filter(a => a.username.toLowerCase().includes(search));
+    }
+
+    filteredAdmins.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+    const tbody = document.getElementById('admin-db-tbody');
+    const emptyMsg = document.getElementById('no-admin-db-msg');
+    const table = document.getElementById('admin-db-table');
+
+    if (filteredAdmins.length === 0) {
+      tbody.innerHTML = '';
+      table.style.display = 'none';
+      emptyMsg.style.display = 'block';
+      return;
+    }
+
+    table.style.display = 'table';
+    emptyMsg.style.display = 'none';
+
+    tbody.innerHTML = filteredAdmins.map(a => `
+      <tr>
+        <td style="font-weight: 600; color: var(--text-primary);"><span style="margin-right: 8px;">👤</span>${escapeHtml(a.username)}</td>
+        <td class="table-date">${formatDateTime(a.createdAt)}</td>
+      </tr>
+    `).join('');
+  }
+
+  // Search admin accounts list
+  document.getElementById('admin-db-search').addEventListener('input', renderAdminsTable);
+
+  // Register New Admin Form Submit
+  document.getElementById('register-admin-form').addEventListener('submit', (e) => {
+    e.preventDefault();
+
+    const usernameInput = document.getElementById('reg-admin-username');
+    const passwordInput = document.getElementById('reg-admin-password');
+
+    const username = usernameInput.value.trim();
+    const password = passwordInput.value;
+
+    if (!username || !password) {
+      showToast('Please fill out all fields', 'error');
+      return;
+    }
+
+    // Username alphanumeric check (3-20 chars)
+    const usernameRegex = /^[a-zA-Z0-9_]{3,20}$/;
+    if (!usernameRegex.test(username)) {
+      showToast('Username must be 3-20 alphanumeric characters or underscores.', 'error');
+      return;
+    }
+
+    // Password length check
+    if (password.length < 6) {
+      showToast('Password must be at least 6 characters long.', 'error');
+      return;
+    }
+
+    // Check if username already exists (case-insensitive)
+    const exists = admins.some(a => a.username.toLowerCase() === username.toLowerCase());
+    if (exists) {
+      showToast(`Username "${username}" is already registered.`, 'error');
+      return;
+    }
+
+    // Add new administrator account
+    const newAdmin = {
+      username: username,
+      password: password,
+      createdAt: new Date().toISOString()
+    };
+
+    admins.push(newAdmin);
+    saveAdmins(admins);
+
+    showToast(`Administrator "${username}" registered successfully!`, 'success');
+
+    // Reset form fields
+    usernameInput.value = '';
+    passwordInput.value = '';
+
+    // Refresh view
+    renderAdminsTable();
+  });
 
   // ===== Modals =====
   const modalOverlay = document.getElementById('modal-overlay');
