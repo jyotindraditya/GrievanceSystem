@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Grievance Management System — Submit, track, and resolve grievances efficiently with a modern, intuitive interface.">
+  <title>GrievX — Grievance Management System</title>
+  <link rel="stylesheet" href="index.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📋</text></svg>">
+</head>
+<body>
+
+  <!-- ===== Login Screen ===== -->
+  <div class="login-screen" id="login-screen">
+    <div class="login-card">
+      <div class="login-header">
+        <div class="login-logo">📋</div>
+        <h2>Welcome to GrievX</h2>
+        <p>Select your role to continue</p>
+      </div>
+      <div class="login-form">
+        <!-- Admin Password (moved above name input) -->
+        <div class="form-group" id="admin-password-group" style="display: none;">
+          <label for="admin-password">Admin Password <span class="required">*</span></label>
+          <input type="password" class="form-input" id="admin-password" placeholder="Enter admin password">
+          <span style="font-size: 0.72rem; color: var(--text-muted);">🔒 Required for administrator access</span>
+        </div>
+
+        <div class="form-group">
+          <label for="login-name">Your Name <span class="required">*</span></label>
+          <input type="text" class="form-input" id="login-name" placeholder="Enter your full name">
+          <span style="font-size: 0.72rem; color: var(--text-muted); margin-top: 4px; display: block;" id="login-name-instruction">ℹ️ Please enter your name followed by your admission number (e.g., John Doe 12345)</span>
+        </div>
+
+        <div class="role-selector">
+          <label class="role-label-title">Role <span class="required">*</span></label>
+          <label class="role-option selected" id="role-member-option">
+            <input type="radio" name="role" value="member" checked>
+            <div class="role-radio"></div>
+            <div class="role-details">
+              <div class="role-name">Member</div>
+              <div class="role-desc">Submit and track your grievances</div>
+            </div>
+            <span class="role-icon">👤</span>
+          </label>
+          <label class="role-option" id="role-admin-option">
+            <input type="radio" name="role" value="admin">
+            <div class="role-radio"></div>
+            <div class="role-details">
+              <div class="role-name">Administrator</div>
+              <div class="role-desc">Manage and respond to all grievances</div>
+            </div>
+            <span class="role-icon">🛡️</span>
+          </label>
+        </div>
+
+        <button class="btn btn-primary" id="login-btn" style="width: 100%; margin-top: 8px;">
+          <span>🚀</span> Continue
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mobile Sidebar Toggle -->
+  <button class="sidebar-toggle hidden" id="sidebarToggle" aria-label="Toggle sidebar">☰</button>
+
+  <div class="app-layout hidden" id="app-layout">
+
+    <!-- ===== Sidebar ===== -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-logo">
+          <div class="logo-icon">📋</div>
+          <div class="logo-text">
+            <h1>GrievX</h1>
+            <span>Management System</span>
+          </div>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-label">Main</div>
+        <div class="nav-item active" data-view="dashboard" id="nav-dashboard">
+          <span class="nav-icon">📊</span>
+          <span>Dashboard</span>
+        </div>
+        <div class="nav-item" data-view="submit" id="nav-submit">
+          <span class="nav-icon">📝</span>
+          <span>Submit Grievance</span>
+        </div>
+        <div class="nav-item" data-view="my-grievances" id="nav-my-grievances">
+          <span class="nav-icon">📂</span>
+          <span>My Grievances</span>
+          <span class="nav-badge" id="grievance-count-badge">0</span>
+        </div>
+
+        <div class="nav-label hidden" id="admin-nav-label">Administration</div>
+        <div class="nav-item hidden" data-view="admin" id="nav-admin">
+          <span class="nav-icon">⚙️</span>
+          <span>Admin Panel</span>
+        </div>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="user-card">
+          <div class="user-avatar" id="user-avatar">U</div>
+          <div class="user-info">
+            <div class="user-name" id="user-display-name">User</div>
+            <div class="user-role" id="user-display-role">Member</div>
+          </div>
+          <button class="logout-btn" id="logout-btn" title="Logout">🚪</button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ===== Main Content ===== -->
+    <main class="main-content">
+
+      <!-- ===== Dashboard View ===== -->
+      <section class="view active" id="view-dashboard">
+        <div class="page-header">
+          <h2>Dashboard</h2>
+          <p>Overview of all grievances and their current status</p>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-card total">
+            <div class="stat-icon">📋</div>
+            <div class="stat-value" id="stat-total">0</div>
+            <div class="stat-label">Total Grievances</div>
+          </div>
+          <div class="stat-card pending">
+            <div class="stat-icon">⏳</div>
+            <div class="stat-value" id="stat-pending">0</div>
+            <div class="stat-label">Pending</div>
+          </div>
+          <div class="stat-card progress">
+            <div class="stat-icon">🔄</div>
+            <div class="stat-value" id="stat-progress">0</div>
+            <div class="stat-label">In Progress</div>
+          </div>
+          <div class="stat-card resolved">
+            <div class="stat-icon">✅</div>
+            <div class="stat-value" id="stat-resolved">0</div>
+            <div class="stat-label">Resolved</div>
+          </div>
+        </div>
+
+        <div class="dashboard-grid">
+          <!-- Recent Grievances -->
+          <div class="glass-card">
+            <div class="card-header">
+              <h3>Recent Grievances</h3>
+              <span class="card-action" data-view="my-grievances">View all →</span>
+            </div>
+            <div class="recent-list" id="recent-grievances">
+              <div class="empty-state">
+                <div class="empty-icon">📭</div>
+                <h4>No grievances yet</h4>
+                <p>Submit your first grievance to get started</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Priority Distribution -->
+          <div class="glass-card">
+            <div class="card-header">
+              <h3>Priority Distribution</h3>
+            </div>
+            <div class="priority-bars" id="priority-distribution">
+              <div class="priority-bar-item">
+                <div class="priority-bar-label">
+                  <span>🟢 Low</span>
+                  <span id="priority-low-count">0</span>
+                </div>
+                <div class="priority-bar-track">
+                  <div class="priority-bar-fill low" id="priority-low-bar" style="width: 0%"></div>
+                </div>
+              </div>
+              <div class="priority-bar-item">
+                <div class="priority-bar-label">
+                  <span>🟡 Medium</span>
+                  <span id="priority-medium-count">0</span>
+                </div>
+                <div class="priority-bar-track">
+                  <div class="priority-bar-fill medium" id="priority-medium-bar" style="width: 0%"></div>
+                </div>
+              </div>
+              <div class="priority-bar-item">
+                <div class="priority-bar-label">
+                  <span>🟠 High</span>
+                  <span id="priority-high-count">0</span>
+                </div>
+                <div class="priority-bar-track">
+                  <div class="priority-bar-fill high" id="priority-high-bar" style="width: 0%"></div>
+                </div>
+              </div>
+              <div class="priority-bar-item">
+                <div class="priority-bar-label">
+                  <span>🔴 Critical</span>
+                  <span id="priority-critical-count">0</span>
+                </div>
+                <div class="priority-bar-track">
+                  <div class="priority-bar-fill critical" id="priority-critical-bar" style="width: 0%"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== Submit Grievance View ===== -->
+      <section class="view" id="view-submit">
+        <div class="page-header">
+          <h2>Submit a Grievance</h2>
+          <p>Describe your concern and we'll address it promptly</p>
+        </div>
+
+        <div class="glass-card">
+          <form id="grievance-form" novalidate>
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="grievance-title">Title <span class="required">*</span></label>
+                <input type="text" class="form-input" id="grievance-title" placeholder="Brief summary of your grievance" required>
+              </div>
+
+              <div class="form-group">
+                <label for="grievance-category">Category <span class="required">*</span></label>
+                <select class="form-select" id="grievance-category" required>
+                  <option value="">Select a category</option>
+                  <option value="Academic">Academic</option>
+                  <option value="Infrastructure">Infrastructure</option>
+                  <option value="Administrative">Administrative</option>
+                  <option value="Financial">Financial</option>
+                  <option value="Harassment">Harassment</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="grievance-priority">Priority <span class="required">*</span></label>
+                <select class="form-select" id="grievance-priority" required>
+                  <option value="">Select priority</option>
+                  <option value="Low">Low</option>
+                  <option value="Medium">Medium</option>
+                  <option value="High">High</option>
+                  <option value="Critical">Critical</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="grievance-email">Email</label>
+                <input type="email" class="form-input" id="grievance-email" placeholder="email@example.com">
+              </div>
+
+              <div class="form-group full-width">
+                <label for="grievance-department">Department</label>
+                <input type="text" class="form-input" id="grievance-department" placeholder="Your department">
+              </div>
+
+              <div class="form-group full-width">
+                <label for="grievance-description">Description <span class="required">*</span></label>
+                <textarea class="form-textarea" id="grievance-description" placeholder="Provide a detailed description of your grievance, including dates, people involved, and any relevant information..." required></textarea>
+              </div>
+
+              <div class="form-group full-width form-actions">
+                <button type="submit" class="btn btn-primary" id="submit-btn">
+                  <span>📤</span> Submit Grievance
+                </button>
+                <button type="reset" class="btn btn-secondary" id="reset-btn">
+                  <span>🔄</span> Reset Form
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <!-- ===== My Grievances View ===== -->
+      <section class="view" id="view-my-grievances">
+        <div class="page-header">
+          <h2>My Grievances</h2>
+          <p>Track the status of your submitted grievances</p>
+        </div>
+
+        <div class="glass-card">
+          <div class="table-controls">
+            <div class="search-box">
+              <span class="search-icon">🔍</span>
+              <input type="text" id="search-grievances" placeholder="Search by title or ID...">
+            </div>
+            <select class="filter-select" id="filter-status">
+              <option value="">All Status</option>
+              <option value="Pending">Pending</option>
+              <option value="In Progress">In Progress</option>
+              <option value="Resolved">Resolved</option>
+              <option value="Rejected">Rejected</option>
+            </select>
+            <select class="filter-select" id="filter-priority">
+              <option value="">All Priority</option>
+              <option value="Low">Low</option>
+              <option value="Medium">Medium</option>
+              <option value="High">High</option>
+              <option value="Critical">Critical</option>
+            </select>
+          </div>
+
+          <table class="data-table" id="grievances-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Title</th>
+                <th>Category</th>
+                <th>Priority</th>
+                <th>Status</th>
+                <th>Date</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="grievances-tbody">
+            </tbody>
+          </table>
+          <div class="empty-state" id="no-grievances-msg" style="display:none;">
+            <div class="empty-icon">📭</div>
+            <h4>No grievances found</h4>
+            <p>Try adjusting your search or filters</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== Admin Panel View ===== -->
+      <section class="view" id="view-admin">
+        <div class="page-header">
+          <h2>Admin Panel</h2>
+          <p>Manage and respond to all submitted grievances</p>
+        </div>
+
+        <div class="glass-card">
+          <div class="table-controls">
+            <div class="search-box">
+              <span class="search-icon">🔍</span>
+              <input type="text" id="admin-search" placeholder="Search grievances...">
+            </div>
+            <select class="filter-select" id="admin-filter-status">
+              <option value="">All Status</option>
+              <option value="Pending">Pending</option>
+              <option value="In Progress">In Progress</option>
+              <option value="Resolved">Resolved</option>
+              <option value="Rejected">Rejected</option>
+            </select>
+            <select class="filter-select" id="admin-filter-priority">
+              <option value="">All Priority</option>
+              <option value="Low">Low</option>
+              <option value="Medium">Medium</option>
+              <option value="High">High</option>
+              <option value="Critical">Critical</option>
+            </select>
+          </div>
+
+          <table class="data-table" id="admin-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Title</th>
+                <th>Submitted By</th>
+                <th>Category</th>
+                <th>Priority</th>
+                <th>Status</th>
+                <th>Date</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="admin-tbody">
+            </tbody>
+          </table>
+          <div class="empty-state" id="no-admin-msg" style="display:none;">
+            <div class="empty-icon">📭</div>
+            <h4>No grievances found</h4>
+            <p>Try adjusting your search or filters</p>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ===== Detail / Admin Modal ===== -->
+  <div class="modal-overlay" id="modal-overlay">
+    <div class="modal" id="modal">
+      <button class="modal-close" id="modal-close" aria-label="Close modal">✕</button>
+      <div id="modal-content">
+        <!-- Dynamically populated -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Toast Container ===== -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
