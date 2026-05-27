@@ -353,7 +353,6 @@
     if (recent.length === 0) {
       container.innerHTML = `
         <div class="empty-state">
-          <div class="empty-icon">📭</div>
           <h4>No grievances yet</h4>
           <p>Submit your first grievance to get started</p>
         </div>`;
@@ -473,8 +472,8 @@
         <td><span class="table-date">${formatDate(g.createdAt)}</span></td>
         <td>
           <div class="table-actions">
-            <button class="btn-icon" title="View details" data-action="view" data-id="${g.id}">👁️</button>
-            <button class="btn-icon" title="Delete" data-action="delete" data-id="${g.id}">🗑️</button>
+            <button class="btn btn-sm btn-secondary" data-action="view" data-id="${g.id}" style="padding: 4px 10px; font-size: 0.75rem;">View</button>
+            <button class="btn btn-sm btn-danger" data-action="delete" data-id="${g.id}" style="padding: 4px 10px; font-size: 0.75rem;">Delete</button>
           </div>
         </td>
       </tr>
