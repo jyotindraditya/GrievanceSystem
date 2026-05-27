@@ -109,17 +109,9 @@
   // ===== Toast Notifications =====
   function showToast(message, type = 'info') {
     const container = document.getElementById('toast-container');
-    const icons = {
-      success: '✅',
-      error: '❌',
-      info: 'ℹ️',
-      warning: '⚠️'
-    };
-
     const toast = document.createElement('div');
     toast.className = `toast ${type}`;
     toast.innerHTML = `
-      <span class="toast-icon">${icons[type] || icons.info}</span>
       <span class="toast-message">${message}</span>
     `;
 
@@ -551,7 +543,7 @@
         <td><span class="table-date">${formatDate(g.createdAt)}</span></td>
         <td>
           <div class="table-actions">
-            <button class="btn-icon" title="Manage" data-action="admin-view" data-id="${g.id}">⚙️</button>
+            <button class="btn btn-sm btn-secondary" data-action="admin-view" data-id="${g.id}" style="padding: 4px 10px; font-size: 0.75rem;">Manage</button>
           </div>
         </td>
       </tr>
@@ -635,7 +627,7 @@
 
     tbody.innerHTML = filteredAdmins.map(a => `
       <tr>
-        <td style="font-weight: 600; color: var(--text-primary);"><span style="margin-right: 8px;">👤</span>${escapeHtml(a.username)}</td>
+        <td style="font-weight: 600; color: var(--text-primary);">${escapeHtml(a.username)}</td>
         <td class="table-date">${formatDateTime(a.createdAt)}</td>
       </tr>
     `).join('');
@@ -768,7 +760,7 @@
       </div>
       ${g.adminResponse ? `
         <div class="admin-response-section">
-          <h4>🛡️ Admin Response</h4>
+          <h4>Admin Response</h4>
           <div class="admin-response-box">${escapeHtml(g.adminResponse)}</div>
           <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 8px;">Last updated: ${formatDateTime(g.updatedAt)}</p>
         </div>
@@ -823,17 +815,17 @@
       <div class="admin-controls">
         <h4>Update Status</h4>
         <div class="status-buttons">
-          <button class="btn btn-sm btn-secondary" data-status="Pending" ${g.status === 'Pending' ? 'disabled style="opacity:0.4"' : ''}>⏳ Pending</button>
-          <button class="btn btn-sm" style="background: var(--status-progress-bg); color: var(--status-progress); border: 1px solid #1a2a48;" data-status="In Progress" ${g.status === 'In Progress' ? 'disabled style="opacity:0.4"' : ''}>🔄 In Progress</button>
-          <button class="btn btn-sm btn-success" data-status="Resolved" ${g.status === 'Resolved' ? 'disabled style="opacity:0.4"' : ''}>✅ Resolved</button>
-          <button class="btn btn-sm btn-danger" data-status="Rejected" ${g.status === 'Rejected' ? 'disabled style="opacity:0.4"' : ''}>❌ Rejected</button>
+          <button class="btn btn-sm btn-secondary" data-status="Pending" ${g.status === 'Pending' ? 'disabled style="opacity:0.4"' : ''}>Pending</button>
+          <button class="btn btn-sm" style="background: var(--status-progress-bg); color: var(--status-progress); border: 1px solid #1a2a48;" data-status="In Progress" ${g.status === 'In Progress' ? 'disabled style="opacity:0.4"' : ''}>In Progress</button>
+          <button class="btn btn-sm btn-success" data-status="Resolved" ${g.status === 'Resolved' ? 'disabled style="opacity:0.4"' : ''}>Resolved</button>
+          <button class="btn btn-sm btn-danger" data-status="Rejected" ${g.status === 'Rejected' ? 'disabled style="opacity:0.4"' : ''}>Rejected</button>
         </div>
       </div>
 
       <div class="admin-controls" style="border-top: none; padding-top: 4px;">
         <h4>Admin Response</h4>
         <textarea class="form-textarea" id="admin-response-input" placeholder="Add a response or note for the grievance submitter...">${g.adminResponse ? escapeHtml(g.adminResponse) : ''}</textarea>
-        <button class="btn btn-primary btn-sm" id="save-admin-response" style="align-self: flex-start;">💾 Save Response</button>
+        <button class="btn btn-primary btn-sm" id="save-admin-response" style="align-self: flex-start;">Save Response</button>
       </div>
     `;
 

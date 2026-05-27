@@ -14,7 +14,7 @@
   <div class="login-screen" id="login-screen">
     <div class="login-card">
       <div class="login-header">
-        <div class="login-logo">📋</div>
+        <div class="login-logo" style="color: white; font-weight: 800; font-size: 1.5rem; background: var(--accent-primary);">G</div>
         <h2>Welcome to Griever</h2>
         <p>Select your role to continue</p>
       </div>
@@ -23,13 +23,13 @@
         <div class="form-group" id="admin-password-group" style="display: none;">
           <label for="admin-password">Admin Password <span class="required">*</span></label>
           <input type="password" class="form-input" id="admin-password" placeholder="Enter admin password">
-          <span style="font-size: 0.72rem; color: var(--text-muted);">🔒 Required for administrator access</span>
+          <span style="font-size: 0.72rem; color: var(--text-muted);">Required for administrator access</span>
         </div>
 
         <div class="form-group">
           <label for="login-name">Your Name <span class="required">*</span></label>
           <input type="text" class="form-input" id="login-name" placeholder="Enter your full name">
-          <span style="font-size: 0.72rem; color: var(--text-muted); margin-top: 4px; display: block;" id="login-name-instruction">ℹ️ Please enter your name followed by your admission number (e.g., John Doe 12345)</span>
+          <span style="font-size: 0.72rem; color: var(--text-muted); margin-top: 4px; display: block;" id="login-name-instruction">Please enter your name followed by your admission number (e.g., John Doe 12345)</span>
         </div>
 
         <div class="role-selector">
@@ -41,7 +41,6 @@
               <div class="role-name">Member</div>
               <div class="role-desc">Submit and track your grievances</div>
             </div>
-            <span class="role-icon">👤</span>
           </label>
           <label class="role-option" id="role-admin-option">
             <input type="radio" name="role" value="admin">
@@ -50,12 +49,11 @@
               <div class="role-name">Administrator</div>
               <div class="role-desc">Manage and respond to all grievances</div>
             </div>
-            <span class="role-icon">🛡️</span>
           </label>
         </div>
 
         <button class="btn btn-primary" id="login-btn" style="width: 100%; margin-top: 8px;">
-          <span>🚀</span> Continue
+          Continue
         </button>
       </div>
     </div>
@@ -80,22 +78,18 @@
       <nav class="sidebar-nav">
         <div class="nav-label">Main</div>
         <div class="nav-item active" data-view="dashboard" id="nav-dashboard">
-          <span class="nav-icon">📊</span>
           <span>Dashboard</span>
         </div>
         <div class="nav-item" data-view="submit" id="nav-submit">
-          <span class="nav-icon">📝</span>
           <span>Submit Grievance</span>
         </div>
         <div class="nav-item" data-view="my-grievances" id="nav-my-grievances">
-          <span class="nav-icon">📂</span>
           <span>My Grievances</span>
           <span class="nav-badge" id="grievance-count-badge">0</span>
         </div>
 
         <div class="nav-label hidden" id="admin-nav-label">Administration</div>
         <div class="nav-item hidden" data-view="admin" id="nav-admin">
-          <span class="nav-icon">⚙️</span>
           <span>Admin Panel</span>
         </div>
       </nav>
@@ -107,7 +101,7 @@
             <div class="user-name" id="user-display-name">User</div>
             <div class="user-role" id="user-display-role">Member</div>
           </div>
-          <button class="logout-btn" id="logout-btn" title="Logout">🚪</button>
+          <button class="logout-btn" id="logout-btn" title="Logout" style="font-size: 0.72rem; padding: 4px 8px; font-weight: 600; border-radius: 4px; border: 1px solid var(--border-subtle); background: var(--bg-primary); cursor: pointer; color: var(--text-secondary); transition: all var(--transition-fast);">Logout</button>
         </div>
       </div>
     </aside>
@@ -124,22 +118,18 @@
 
         <div class="stats-grid">
           <div class="stat-card total">
-            <div class="stat-icon">📋</div>
             <div class="stat-value" id="stat-total">0</div>
             <div class="stat-label">Total Grievances</div>
           </div>
           <div class="stat-card pending">
-            <div class="stat-icon">⏳</div>
             <div class="stat-value" id="stat-pending">0</div>
             <div class="stat-label">Pending</div>
           </div>
           <div class="stat-card progress">
-            <div class="stat-icon">🔄</div>
             <div class="stat-value" id="stat-progress">0</div>
             <div class="stat-label">In Progress</div>
           </div>
           <div class="stat-card resolved">
-            <div class="stat-icon">✅</div>
             <div class="stat-value" id="stat-resolved">0</div>
             <div class="stat-label">Resolved</div>
           </div>
@@ -147,14 +137,13 @@
 
         <div class="dashboard-grid">
           <!-- Recent Grievances -->
-          <div class="glass-card">
+          <div class="solid-card">
             <div class="card-header">
               <h3>Recent Grievances</h3>
               <span class="card-action" data-view="my-grievances">View all →</span>
             </div>
             <div class="recent-list" id="recent-grievances">
               <div class="empty-state">
-                <div class="empty-icon">📭</div>
                 <h4>No grievances yet</h4>
                 <p>Submit your first grievance to get started</p>
               </div>
@@ -162,14 +151,14 @@
           </div>
 
           <!-- Priority Distribution -->
-          <div class="glass-card">
+          <div class="solid-card">
             <div class="card-header">
               <h3>Priority Distribution</h3>
             </div>
             <div class="priority-bars" id="priority-distribution">
               <div class="priority-bar-item">
                 <div class="priority-bar-label">
-                  <span>🟢 Low</span>
+                  <span>Low</span>
                   <span id="priority-low-count">0</span>
                 </div>
                 <div class="priority-bar-track">
@@ -178,7 +167,7 @@
               </div>
               <div class="priority-bar-item">
                 <div class="priority-bar-label">
-                  <span>🟡 Medium</span>
+                  <span>Medium</span>
                   <span id="priority-medium-count">0</span>
                 </div>
                 <div class="priority-bar-track">
@@ -187,7 +176,7 @@
               </div>
               <div class="priority-bar-item">
                 <div class="priority-bar-label">
-                  <span>🟠 High</span>
+                  <span>High</span>
                   <span id="priority-high-count">0</span>
                 </div>
                 <div class="priority-bar-track">
@@ -196,7 +185,7 @@
               </div>
               <div class="priority-bar-item">
                 <div class="priority-bar-label">
-                  <span>🔴 Critical</span>
+                  <span>Critical</span>
                   <span id="priority-critical-count">0</span>
                 </div>
                 <div class="priority-bar-track">
@@ -215,7 +204,7 @@
           <p>Describe your concern and we'll address it promptly</p>
         </div>
 
-        <div class="glass-card">
+        <div class="solid-card">
           <form id="grievance-form" novalidate>
             <div class="form-grid">
               <div class="form-group">
@@ -264,10 +253,10 @@
 
               <div class="form-group full-width form-actions">
                 <button type="submit" class="btn btn-primary" id="submit-btn">
-                  <span>📤</span> Submit Grievance
+                  Submit Grievance
                 </button>
                 <button type="reset" class="btn btn-secondary" id="reset-btn">
-                  <span>🔄</span> Reset Form
+                  Reset Form
                 </button>
               </div>
             </div>
@@ -282,11 +271,10 @@
           <p>Track the status of your submitted grievances</p>
         </div>
 
-        <div class="glass-card">
+        <div class="solid-card">
           <div class="table-controls">
             <div class="search-box">
-              <span class="search-icon">🔍</span>
-              <input type="text" id="search-grievances" placeholder="Search by title or ID...">
+              <input type="text" id="search-grievances" placeholder="Search by title or ID..." style="padding-left: 14px;">
             </div>
             <select class="filter-select" id="filter-status">
               <option value="">All Status</option>
@@ -320,7 +308,6 @@
             </tbody>
           </table>
           <div class="empty-state" id="no-grievances-msg" style="display:none;">
-            <div class="empty-icon">📭</div>
             <h4>No grievances found</h4>
             <p>Try adjusting your search or filters</p>
           </div>
@@ -336,17 +323,16 @@
 
         <!-- Admin Sub-tabs -->
         <div class="admin-tabs">
-          <button class="admin-tab active" data-admin-tab="grievances">📋 Grievances</button>
-          <button class="admin-tab" data-admin-tab="database">🛡️ Admin Database</button>
+          <button class="admin-tab active" data-admin-tab="grievances">Grievances</button>
+          <button class="admin-tab" data-admin-tab="database">Admin Database</button>
         </div>
 
         <!-- Grievances Sub-view -->
         <div class="admin-subview" id="admin-subview-grievances">
-          <div class="glass-card">
+          <div class="solid-card">
             <div class="table-controls">
               <div class="search-box">
-                <span class="search-icon">🔍</span>
-                <input type="text" id="admin-search" placeholder="Search grievances...">
+                <input type="text" id="admin-search" placeholder="Search grievances..." style="padding-left: 14px;">
               </div>
               <select class="filter-select" id="admin-filter-status">
                 <option value="">All Status</option>
@@ -381,7 +367,6 @@
               </tbody>
             </table>
             <div class="empty-state" id="no-admin-msg" style="display:none;">
-              <div class="empty-icon">📭</div>
               <h4>No grievances found</h4>
               <p>Try adjusting your search or filters</p>
             </div>
@@ -392,12 +377,11 @@
         <div class="admin-subview" id="admin-subview-database" style="display: none;">
           <div class="admin-db-grid">
             <!-- Left: Registered Admins List -->
-            <div class="glass-card">
+            <div class="solid-card">
               <div class="card-header">
-                <h3>🛡️ Administrator Accounts</h3>
+                <h3>Administrator Accounts</h3>
                 <div class="search-box" style="max-width: 220px; flex: none;">
-                  <span class="search-icon">🔍</span>
-                  <input type="text" id="admin-db-search" placeholder="Search admins...">
+                  <input type="text" id="admin-db-search" placeholder="Search admins..." style="padding-left: 14px;">
                 </div>
               </div>
 
@@ -413,15 +397,14 @@
                 </tbody>
               </table>
               <div class="empty-state" id="no-admin-db-msg" style="display:none;">
-                <div class="empty-icon">📭</div>
                 <h4>No admin accounts found</h4>
               </div>
             </div>
 
             <!-- Right: Add New Admin Account -->
-            <div class="glass-card">
+            <div class="solid-card">
               <div class="card-header">
-                <h3>👤 Register New Administrator</h3>
+                <h3>Register New Administrator</h3>
               </div>
               <form id="register-admin-form" autocomplete="off" novalidate>
                 <div class="form-grid" style="grid-template-columns: 1fr; gap: 16px;">
@@ -435,7 +418,7 @@
                   </div>
                   <div class="form-group" style="margin-top: 8px;">
                     <button type="submit" class="btn btn-primary" style="width: 100%;">
-                      <span>➕</span> Register Account
+                      Register Account
                     </button>
                   </div>
                 </div>

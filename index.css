@@ -605,7 +605,7 @@ a {
 }
 
 /* ===== Solid Card ===== */
-.glass-card {
+.solid-card {
   background: var(--bg-card);
   border: 1px solid var(--border-card);
   border-radius: var(--radius-lg);
@@ -613,7 +613,7 @@ a {
   transition: all var(--transition-base);
 }
 
-.glass-card:hover {
+.solid-card:hover {
   border-color: #30305e;
 }
 
