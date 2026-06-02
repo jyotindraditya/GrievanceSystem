@@ -333,10 +333,12 @@
       adminNavLabel.classList.remove('hidden');
       adminNavItem.classList.remove('hidden');
       document.getElementById('nav-my-grievances').classList.add('hidden');
+      document.getElementById('nav-submit').classList.add('hidden');
     } else {
       adminNavLabel.classList.add('hidden');
       adminNavItem.classList.add('hidden');
       document.getElementById('nav-my-grievances').classList.remove('hidden');
+      document.getElementById('nav-submit').classList.remove('hidden');
       // If currently on admin view, redirect to dashboard
       if (document.getElementById('view-admin').classList.contains('active')) {
         switchView('dashboard');
