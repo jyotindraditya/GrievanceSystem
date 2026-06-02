@@ -332,9 +332,11 @@
     if (isAdmin()) {
       adminNavLabel.classList.remove('hidden');
       adminNavItem.classList.remove('hidden');
+      document.getElementById('nav-my-grievances').classList.add('hidden');
     } else {
       adminNavLabel.classList.add('hidden');
       adminNavItem.classList.add('hidden');
+      document.getElementById('nav-my-grievances').classList.remove('hidden');
       // If currently on admin view, redirect to dashboard
       if (document.getElementById('view-admin').classList.contains('active')) {
         switchView('dashboard');
@@ -415,7 +417,8 @@
     animateCounter('stat-resolved', resolved);
 
     // Update badge
-    document.getElementById('grievance-count-badge').textContent = total;
+    const myGrievancesCount = grievances.filter(g => g.name === currentUser.name).length;
+    document.getElementById('grievance-count-badge').textContent = myGrievancesCount;
 
     // Priority distribution
     const priorities = { Low: 0, Medium: 0, High: 0, Critical: 0 };
