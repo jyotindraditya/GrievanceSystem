@@ -1,67 +1,140 @@
 // ===== Griever — Grievance Management System =====
 // SPA Router, CRUD, Role-Based Access, Dashboard, Admin Panel, Toast Notifications
+// Data powered by Supabase (PostgreSQL)
 
-(function () {
+(async function () {
   'use strict';
 
-  // ===== Data Store =====
-  const STORAGE_KEY = 'griever_grievances';
-  const SESSION_KEY = 'griever_session';
+  // ===== Loading Overlay =====
+  const loadingOverlay = document.getElementById('loading-overlay');
 
-  function loadGrievances() {
+  function showLoading() {
+    loadingOverlay.classList.add('active');
+  }
+
+  function hideLoading() {
+    loadingOverlay.classList.remove('active');
+  }
+
+  // ===== Supabase Data Layer =====
+  // `db` is the Supabase client created in supabase.js
+
+  async function fetchGrievances() {
     try {
-      // Migrate legacy GrievX data if present to prevent data loss
-      if (!localStorage.getItem(STORAGE_KEY) && localStorage.getItem('grievx_grievances')) {
-        localStorage.setItem(STORAGE_KEY, localStorage.getItem('grievx_grievances'));
-        localStorage.removeItem('grievx_grievances');
-      }
-      return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
-    } catch {
+      const { data, error } = await db
+        .from('grievances')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return data || [];
+    } catch (err) {
+      console.error('Failed to fetch grievances:', err);
+      showToast('Failed to load grievances: ' + err.message, 'error');
       return [];
     }
   }
 
-  function saveGrievances(data) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-  }
-
-  let grievances = loadGrievances();
-
-  // ===== Admin Database Store =====
-  const ADMIN_STORAGE_KEY = 'griever_admins';
-
-  function loadAdmins() {
+  async function fetchAdminsForDisplay() {
     try {
-      let data = JSON.parse(localStorage.getItem(ADMIN_STORAGE_KEY));
-      if (!data || data.length === 0) {
-        data = [
-          {
-            username: 'Admin',
-            password: 'admin123',
-            createdAt: new Date().toISOString()
-          }
-        ];
-        localStorage.setItem(ADMIN_STORAGE_KEY, JSON.stringify(data));
-      }
-      return data;
-    } catch {
-      return [
-        {
-          username: 'Admin',
-          password: 'admin123',
-          createdAt: new Date().toISOString()
-        }
-      ];
+      const { data, error } = await db
+        .from('admins')
+        .select('id, username, created_at')
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return data || [];
+    } catch (err) {
+      console.error('Failed to fetch admins:', err);
+      showToast('Failed to load admin accounts: ' + err.message, 'error');
+      return [];
     }
   }
 
-  function saveAdmins(data) {
-    localStorage.setItem(ADMIN_STORAGE_KEY, JSON.stringify(data));
+  async function validateAdminLogin(username, password) {
+    try {
+      const { data, error } = await db
+        .from('admins')
+        .select('username')
+        .ilike('username', username)
+        .eq('password', password);
+      if (error) throw error;
+      return data && data.length > 0;
+    } catch (err) {
+      console.error('Admin login validation error:', err);
+      showToast('Login error: ' + err.message, 'error');
+      return false;
+    }
   }
 
-  let admins = loadAdmins();
+  async function insertGrievanceToDB(grievance) {
+    try {
+      const { error } = await db.from('grievances').insert([grievance]);
+      if (error) throw error;
+      return true;
+    } catch (err) {
+      console.error('Failed to insert grievance:', err);
+      showToast('Failed to submit grievance: ' + err.message, 'error');
+      return false;
+    }
+  }
+
+  async function updateGrievanceInDB(id, updates) {
+    try {
+      const { error } = await db
+        .from('grievances')
+        .update(updates)
+        .eq('id', id);
+      if (error) throw error;
+      return true;
+    } catch (err) {
+      console.error('Failed to update grievance:', err);
+      showToast('Failed to update grievance: ' + err.message, 'error');
+      return false;
+    }
+  }
+
+  async function deleteGrievanceFromDB(id) {
+    try {
+      const { error } = await db
+        .from('grievances')
+        .delete()
+        .eq('id', id);
+      if (error) throw error;
+      return true;
+    } catch (err) {
+      console.error('Failed to delete grievance:', err);
+      showToast('Failed to delete grievance: ' + err.message, 'error');
+      return false;
+    }
+  }
+
+  async function insertAdminToDB(admin) {
+    try {
+      const { error } = await db.from('admins').insert([admin]);
+      if (error) throw error;
+      return true;
+    } catch (err) {
+      console.error('Failed to register admin:', err);
+      // Check for unique constraint violation
+      if (err.code === '23505' || (err.message && err.message.includes('duplicate'))) {
+        showToast(`Username "${admin.username}" is already registered.`, 'error');
+      } else {
+        showToast('Failed to register admin: ' + err.message, 'error');
+      }
+      return false;
+    }
+  }
+
+  // ===== Local Data Cache =====
+  let grievances = [];
+  let admins = [];
+
+  // Helper to refresh grievances from DB into local cache
+  async function refreshGrievancesCache() {
+    grievances = await fetchGrievances();
+  }
 
   // ===== Session / Role Management =====
+  const SESSION_KEY = 'griever_session';
   let currentUser = null; // { name, role }
 
   function loadSession() {
@@ -153,7 +226,7 @@
   });
 
   // Login button
-  document.getElementById('login-btn').addEventListener('click', () => {
+  document.getElementById('login-btn').addEventListener('click', async () => {
     const name = document.getElementById('login-name').value.trim();
     if (!name) {
       showToast('Please enter your name', 'error');
@@ -162,11 +235,22 @@
 
     const role = document.querySelector('input[name="role"]:checked').value;
 
-    // Validate admin password against the Admin Database
+    // Validate admin password against Supabase admins table
     if (role === 'admin') {
       const password = document.getElementById('admin-password').value;
-      const matchedAdmin = admins.find(a => a.username.toLowerCase() === name.toLowerCase() && a.password === password);
-      if (!matchedAdmin) {
+      if (!password) {
+        showToast('Please enter the admin password', 'error');
+        return;
+      }
+
+      const loginBtn = document.getElementById('login-btn');
+      loginBtn.classList.add('loading');
+
+      const isValid = await validateAdminLogin(name, password);
+
+      loginBtn.classList.remove('loading');
+
+      if (!isValid) {
         showToast('Invalid administrator username or password. Access denied.', 'error');
         document.getElementById('admin-password').value = '';
         return;
@@ -175,11 +259,18 @@
 
     currentUser = { name, role };
     saveSession(currentUser);
-    enterApp();
+    await enterApp();
   });
 
   // Login on Enter key
   document.getElementById('login-name').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      document.getElementById('login-btn').click();
+    }
+  });
+
+  // Also allow Enter on admin password field
+  document.getElementById('admin-password').addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {
       document.getElementById('login-btn').click();
     }
@@ -206,7 +297,9 @@
     switchView('dashboard');
   });
 
-  function enterApp() {
+  async function enterApp() {
+    showLoading();
+
     loginScreen.classList.add('hidden');
     appLayout.classList.remove('hidden');
     sidebarToggle.classList.remove('hidden');
@@ -233,11 +326,12 @@
       }
     }
 
-    // Seed demo data on first use
-    seedDemoData();
-    grievances = loadGrievances();
+    // Seed demo data on first use then load grievances
+    await seedDemoData();
+    await refreshGrievancesCache();
     refreshDashboard();
 
+    hideLoading();
     showToast(`Welcome, ${currentUser.name}!`, 'success');
   }
 
@@ -348,7 +442,9 @@
 
   function renderRecentGrievances() {
     const container = document.getElementById('recent-grievances');
-    const recent = [...grievances].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 5);
+    const recent = [...grievances]
+      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+      .slice(0, 5);
 
     if (recent.length === 0) {
       container.innerHTML = `
@@ -364,7 +460,7 @@
         <div class="ri-priority ${g.priority.toLowerCase()}"></div>
         <div class="ri-info">
           <div class="ri-title">${escapeHtml(g.title)}</div>
-          <div class="ri-meta">${g.id} · ${formatDate(g.createdAt)}</div>
+          <div class="ri-meta">${g.id} · ${formatDate(g.created_at)}</div>
         </div>
         <div class="ri-status">
           <span class="badge ${statusClass(g.status)}">${g.status}</span>
@@ -381,7 +477,7 @@
   // ===== Submit Grievance =====
   const form = document.getElementById('grievance-form');
 
-  form.addEventListener('submit', (e) => {
+  form.addEventListener('submit', async (e) => {
     e.preventDefault();
 
     const title = document.getElementById('grievance-title').value.trim();
@@ -407,17 +503,25 @@
       department,
       description,
       status: 'Pending',
-      adminResponse: '',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      admin_response: '',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     };
 
-    grievances.push(grievance);
-    saveGrievances(grievances);
+    // Show loading state on submit button
+    const submitBtn = document.getElementById('submit-btn');
+    submitBtn.classList.add('loading');
 
-    showToast(`Grievance ${grievance.id} submitted successfully!`, 'success');
-    form.reset();
-    refreshDashboard();
+    const success = await insertGrievanceToDB(grievance);
+
+    submitBtn.classList.remove('loading');
+
+    if (success) {
+      grievances.push(grievance); // Update local cache
+      showToast(`Grievance ${grievance.id} submitted successfully!`, 'success');
+      form.reset();
+      refreshDashboard();
+    }
   });
 
   // ===== My Grievances Table =====
@@ -446,7 +550,7 @@
       filtered = filtered.filter(g => g.priority === priorityFilter);
     }
 
-    filtered.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    filtered.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
     const tbody = document.getElementById('grievances-tbody');
     const emptyMsg = document.getElementById('no-grievances-msg');
@@ -469,7 +573,7 @@
         <td>${escapeHtml(g.category)}</td>
         <td><span class="badge-priority ${g.priority.toLowerCase()}">${g.priority}</span></td>
         <td><span class="badge ${statusClass(g.status)}">${g.status}</span></td>
-        <td><span class="table-date">${formatDate(g.createdAt)}</span></td>
+        <td><span class="table-date">${formatDate(g.created_at)}</span></td>
         <td>
           <div class="table-actions">
             <button class="btn btn-sm btn-secondary" data-action="view" data-id="${g.id}" style="padding: 4px 10px; font-size: 0.75rem;">View</button>
@@ -515,7 +619,7 @@
       filtered = filtered.filter(g => g.priority === priorityFilter);
     }
 
-    filtered.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    filtered.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
     const tbody = document.getElementById('admin-tbody');
     const emptyMsg = document.getElementById('no-admin-msg');
@@ -539,7 +643,7 @@
         <td>${escapeHtml(g.category)}</td>
         <td><span class="badge-priority ${g.priority.toLowerCase()}">${g.priority}</span></td>
         <td><span class="badge ${statusClass(g.status)}">${g.status}</span></td>
-        <td><span class="table-date">${formatDate(g.createdAt)}</span></td>
+        <td><span class="table-date">${formatDate(g.created_at)}</span></td>
         <td>
           <div class="table-actions">
             <button class="btn btn-sm btn-secondary" data-action="admin-view" data-id="${g.id}" style="padding: 4px 10px; font-size: 0.75rem;">Manage</button>
@@ -563,7 +667,7 @@
   const adminSubviews = document.querySelectorAll('.admin-subview');
 
   adminTabs.forEach(tab => {
-    tab.addEventListener('click', () => {
+    tab.addEventListener('click', async () => {
       adminTabs.forEach(t => t.classList.remove('active'));
       tab.classList.add('active');
 
@@ -577,7 +681,8 @@
       });
 
       if (targetSubview === 'database') {
-        renderAdminsTable();
+        admins = await fetchAdminsForDisplay();
+        renderAdminsTableUI();
       } else {
         renderAdminTable();
       }
@@ -600,7 +705,7 @@
   }
 
   // ===== Administrator Accounts Table =====
-  function renderAdminsTable() {
+  function renderAdminsTableUI() {
     const search = document.getElementById('admin-db-search').value.toLowerCase().trim();
     let filteredAdmins = [...admins];
 
@@ -608,7 +713,7 @@
       filteredAdmins = filteredAdmins.filter(a => a.username.toLowerCase().includes(search));
     }
 
-    filteredAdmins.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    filteredAdmins.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
     const tbody = document.getElementById('admin-db-tbody');
     const emptyMsg = document.getElementById('no-admin-db-msg');
@@ -627,16 +732,16 @@
     tbody.innerHTML = filteredAdmins.map(a => `
       <tr>
         <td style="font-weight: 600; color: var(--text-primary);">${escapeHtml(a.username)}</td>
-        <td class="table-date">${formatDateTime(a.createdAt)}</td>
+        <td class="table-date">${formatDateTime(a.created_at)}</td>
       </tr>
     `).join('');
   }
 
-  // Search admin accounts list
-  document.getElementById('admin-db-search').addEventListener('input', renderAdminsTable);
+  // Search admin accounts list (filters locally)
+  document.getElementById('admin-db-search').addEventListener('input', renderAdminsTableUI);
 
   // Register New Admin Form Submit
-  document.getElementById('register-admin-form').addEventListener('submit', (e) => {
+  document.getElementById('register-admin-form').addEventListener('submit', async (e) => {
     e.preventDefault();
 
     const usernameInput = document.getElementById('reg-admin-username');
@@ -663,31 +768,31 @@
       return;
     }
 
-    // Check if username already exists (case-insensitive)
-    const exists = admins.some(a => a.username.toLowerCase() === username.toLowerCase());
-    if (exists) {
-      showToast(`Username "${username}" is already registered.`, 'error');
-      return;
-    }
-
-    // Add new administrator account
+    // Insert into Supabase (unique constraint will prevent duplicates)
     const newAdmin = {
       username: username,
-      password: password,
-      createdAt: new Date().toISOString()
+      password: password
+      // created_at will be set by the database default
     };
 
-    admins.push(newAdmin);
-    saveAdmins(admins);
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    submitBtn.classList.add('loading');
 
-    showToast(`Administrator "${username}" registered successfully!`, 'success');
+    const success = await insertAdminToDB(newAdmin);
 
-    // Reset form fields
-    usernameInput.value = '';
-    passwordInput.value = '';
+    submitBtn.classList.remove('loading');
 
-    // Refresh view
-    renderAdminsTable();
+    if (success) {
+      showToast(`Administrator "${username}" registered successfully!`, 'success');
+
+      // Reset form fields
+      usernameInput.value = '';
+      passwordInput.value = '';
+
+      // Refresh admin list from DB
+      admins = await fetchAdminsForDisplay();
+      renderAdminsTableUI();
+    }
   });
 
   // ===== Modals =====
@@ -750,18 +855,18 @@
         </div>
         <div class="detail-item">
           <span class="detail-label">Submitted On</span>
-          <span class="detail-value">${formatDateTime(g.createdAt)}</span>
+          <span class="detail-value">${formatDateTime(g.created_at)}</span>
         </div>
         <div class="detail-item full-width">
           <span class="detail-label">Description</span>
           <div class="detail-description">${escapeHtml(g.description)}</div>
         </div>
       </div>
-      ${g.adminResponse ? `
+      ${g.admin_response ? `
         <div class="admin-response-section">
           <h4>Admin Response</h4>
-          <div class="admin-response-box">${escapeHtml(g.adminResponse)}</div>
-          <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 8px;">Last updated: ${formatDateTime(g.updatedAt)}</p>
+          <div class="admin-response-box">${escapeHtml(g.admin_response)}</div>
+          <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 8px;">Last updated: ${formatDateTime(g.updated_at)}</p>
         </div>
       ` : ''}
     `;
@@ -803,7 +908,7 @@
         </div>
         <div class="detail-item">
           <span class="detail-label">Date</span>
-          <span class="detail-value">${formatDateTime(g.createdAt)}</span>
+          <span class="detail-value">${formatDateTime(g.created_at)}</span>
         </div>
         <div class="detail-item full-width">
           <span class="detail-label">Description</span>
@@ -823,59 +928,82 @@
 
       <div class="admin-controls" style="border-top: none; padding-top: 4px;">
         <h4>Admin Response</h4>
-        <textarea class="form-textarea" id="admin-response-input" placeholder="Add a response or note for the grievance submitter...">${g.adminResponse ? escapeHtml(g.adminResponse) : ''}</textarea>
+        <textarea class="form-textarea" id="admin-response-input" placeholder="Add a response or note for the grievance submitter...">${g.admin_response ? escapeHtml(g.admin_response) : ''}</textarea>
         <button class="btn btn-primary btn-sm" id="save-admin-response" style="align-self: flex-start;">Save Response</button>
       </div>
     `;
 
     // Status button handlers
     modalContent.querySelectorAll('[data-status]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        updateGrievanceStatus(id, btn.dataset.status);
+      btn.addEventListener('click', async () => {
+        btn.classList.add('loading');
+        await updateGrievanceStatus(id, btn.dataset.status);
+        btn.classList.remove('loading');
         openAdminModal(id); // Re-render modal
       });
     });
 
     // Save response handler
-    document.getElementById('save-admin-response').addEventListener('click', () => {
+    document.getElementById('save-admin-response').addEventListener('click', async () => {
       const response = document.getElementById('admin-response-input').value.trim();
-      updateAdminResponse(id, response);
+      const saveBtn = document.getElementById('save-admin-response');
+      saveBtn.classList.add('loading');
+      await updateAdminResponse(id, response);
+      saveBtn.classList.remove('loading');
     });
 
     openModal();
   }
 
   // ===== CRUD Operations =====
-  function updateGrievanceStatus(id, newStatus) {
+  async function updateGrievanceStatus(id, newStatus) {
     if (!isAdmin()) return;
 
     const idx = grievances.findIndex(g => g.id === id);
     if (idx === -1) return;
 
     const oldStatus = grievances[idx].status;
-    grievances[idx].status = newStatus;
-    grievances[idx].updatedAt = new Date().toISOString();
-    saveGrievances(grievances);
+    const now = new Date().toISOString();
 
-    showToast(`${id}: Status changed from "${oldStatus}" to "${newStatus}"`, 'success');
-    refreshDashboard();
-    renderAdminTable();
+    const success = await updateGrievanceInDB(id, {
+      status: newStatus,
+      updated_at: now
+    });
+
+    if (success) {
+      // Update local cache
+      grievances[idx].status = newStatus;
+      grievances[idx].updated_at = now;
+
+      showToast(`${id}: Status changed from "${oldStatus}" to "${newStatus}"`, 'success');
+      refreshDashboard();
+      renderAdminTable();
+    }
   }
 
-  function updateAdminResponse(id, response) {
+  async function updateAdminResponse(id, response) {
     if (!isAdmin()) return;
 
     const idx = grievances.findIndex(g => g.id === id);
     if (idx === -1) return;
 
-    grievances[idx].adminResponse = response;
-    grievances[idx].updatedAt = new Date().toISOString();
-    saveGrievances(grievances);
+    const now = new Date().toISOString();
 
-    showToast('Admin response saved successfully', 'success');
+    const success = await updateGrievanceInDB(id, {
+      admin_response: response,
+      updated_at: now
+    });
+
+    if (success) {
+      // Update local cache
+      grievances[idx].admin_response = response;
+      grievances[idx].updated_at = now;
+
+      showToast('Admin response saved successfully', 'success');
+    }
   }
 
-  function deleteGrievance(id) {
+  async function deleteGrievance(id) {
     const g = grievances.find(gr => gr.id === id);
     if (!g) return;
 
@@ -887,12 +1015,15 @@
 
     if (!confirm(`Delete grievance "${g.title}" (${g.id})?`)) return;
 
-    grievances = grievances.filter(gr => gr.id !== id);
-    saveGrievances(grievances);
+    const success = await deleteGrievanceFromDB(id);
 
-    showToast(`Grievance ${id} deleted`, 'warning');
-    renderGrievancesTable();
-    refreshDashboard();
+    if (success) {
+      grievances = grievances.filter(gr => gr.id !== id);
+
+      showToast(`Grievance ${id} deleted`, 'warning');
+      renderGrievancesTable();
+      refreshDashboard();
+    }
   }
 
   // ===== Helpers =====
@@ -914,98 +1045,111 @@
   }
 
   // ===== Seed demo data if empty =====
-  function seedDemoData() {
-    if (grievances.length > 0) return;
+  async function seedDemoData() {
+    try {
+      // Check if any grievances exist
+      const { data, error } = await db
+        .from('grievances')
+        .select('id')
+        .limit(1);
 
-    const demoData = [
-      {
-        id: generateId(),
-        title: 'Library AC not functioning properly',
-        category: 'Infrastructure',
-        priority: 'High',
-        name: 'Arjun Mehta',
-        email: 'arjun.mehta@university.edu',
-        department: 'Computer Science',
-        description: 'The air conditioning unit in the main library (Block A, 2nd floor) has been malfunctioning for the past week. The temperature is uncomfortably high, making it impossible to study for extended periods. Multiple students have raised this concern verbally.',
-        status: 'In Progress',
-        adminResponse: 'Maintenance team has been notified. Parts have been ordered and repair is scheduled for next Monday.',
-        createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-        updatedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString()
-      },
-      {
-        id: generateId(),
-        title: 'Delay in scholarship disbursement',
-        category: 'Financial',
-        priority: 'Critical',
-        name: 'Priya Sharma',
-        email: 'priya.s@university.edu',
-        department: 'Economics',
-        description: 'The merit-based scholarship for the semester was supposed to be disbursed by April 15th but has still not been credited to my account. I have submitted all required documents on time and verified my bank details with the finance office.',
-        status: 'Pending',
-        adminResponse: '',
-        createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-        updatedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString()
-      },
-      {
-        id: generateId(),
-        title: 'Incorrect marks in semester result',
-        category: 'Academic',
-        priority: 'High',
-        name: 'Ravi Kumar',
-        email: 'ravi.k@university.edu',
-        department: 'Mechanical Engineering',
-        description: 'My marks in the subject "Thermodynamics II" (ME301) have been incorrectly entered in the result portal. I scored 78 in the internal assessment but it shows 48. I have my graded answer sheet as proof.',
-        status: 'Pending',
-        adminResponse: '',
-        createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-        updatedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString()
-      },
-      {
-        id: generateId(),
-        title: 'Hostel water supply issues',
-        category: 'Infrastructure',
-        priority: 'Medium',
-        name: 'Sneha Patel',
-        email: 'sneha.p@university.edu',
-        department: 'Biotechnology',
-        description: 'Hostel Block C has been facing irregular water supply for the past two weeks. Water is available only for 2 hours in the morning and 1 hour in the evening, which is insufficient for daily needs.',
-        status: 'Resolved',
-        adminResponse: 'The municipal water supply issue has been resolved. An additional water tank has been installed for Block C. Please report if the issue persists.',
-        createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
-        updatedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString()
-      },
-      {
-        id: generateId(),
-        title: 'Request for additional lab hours',
-        category: 'Academic',
-        priority: 'Low',
-        name: 'Aditya Singh',
-        email: 'aditya.s@university.edu',
-        department: 'Electronics',
-        description: 'The current lab hours (10AM-1PM) are insufficient for completing the circuit design projects. Requesting the lab to be accessible till 6PM on weekdays and also on Saturdays for students working on their final year projects.',
-        status: 'Resolved',
-        adminResponse: 'Lab hours have been extended to 5PM on weekdays. Saturday access from 10AM-2PM is also now available. Students must register at the lab office.',
-        createdAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),
-        updatedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
-      },
-      {
-        id: generateId(),
-        title: 'Staff behavior complaint at admin office',
-        category: 'Administrative',
-        priority: 'Medium',
-        name: 'Kavita Reddy',
-        email: 'kavita.r@university.edu',
-        department: 'Chemistry',
-        description: 'I visited the administrative office to collect my migration certificate and was met with extremely rude behavior from the front-desk staff. They were dismissive, uncooperative, and refused to give a timeline for the certificate processing despite my urgent need.',
-        status: 'In Progress',
-        adminResponse: '',
-        createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-        updatedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString()
+      if (error) throw error;
+      if (data && data.length > 0) return; // Table is not empty
+
+      const demoData = [
+        {
+          id: generateId(),
+          title: 'Library AC not functioning properly',
+          category: 'Infrastructure',
+          priority: 'High',
+          name: 'Arjun Mehta',
+          email: 'arjun.mehta@university.edu',
+          department: 'Computer Science',
+          description: 'The air conditioning unit in the main library (Block A, 2nd floor) has been malfunctioning for the past week. The temperature is uncomfortably high, making it impossible to study for extended periods. Multiple students have raised this concern verbally.',
+          status: 'In Progress',
+          admin_response: 'Maintenance team has been notified. Parts have been ordered and repair is scheduled for next Monday.',
+          created_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+          updated_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString()
+        },
+        {
+          id: generateId(),
+          title: 'Delay in scholarship disbursement',
+          category: 'Financial',
+          priority: 'Critical',
+          name: 'Priya Sharma',
+          email: 'priya.s@university.edu',
+          department: 'Economics',
+          description: 'The merit-based scholarship for the semester was supposed to be disbursed by April 15th but has still not been credited to my account. I have submitted all required documents on time and verified my bank details with the finance office.',
+          status: 'Pending',
+          admin_response: '',
+          created_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+          updated_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString()
+        },
+        {
+          id: generateId(),
+          title: 'Incorrect marks in semester result',
+          category: 'Academic',
+          priority: 'High',
+          name: 'Ravi Kumar',
+          email: 'ravi.k@university.edu',
+          department: 'Mechanical Engineering',
+          description: 'My marks in the subject "Thermodynamics II" (ME301) have been incorrectly entered in the result portal. I scored 78 in the internal assessment but it shows 48. I have my graded answer sheet as proof.',
+          status: 'Pending',
+          admin_response: '',
+          created_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+          updated_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString()
+        },
+        {
+          id: generateId(),
+          title: 'Hostel water supply issues',
+          category: 'Infrastructure',
+          priority: 'Medium',
+          name: 'Sneha Patel',
+          email: 'sneha.p@university.edu',
+          department: 'Biotechnology',
+          description: 'Hostel Block C has been facing irregular water supply for the past two weeks. Water is available only for 2 hours in the morning and 1 hour in the evening, which is insufficient for daily needs.',
+          status: 'Resolved',
+          admin_response: 'The municipal water supply issue has been resolved. An additional water tank has been installed for Block C. Please report if the issue persists.',
+          created_at: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
+          updated_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString()
+        },
+        {
+          id: generateId(),
+          title: 'Request for additional lab hours',
+          category: 'Academic',
+          priority: 'Low',
+          name: 'Aditya Singh',
+          email: 'aditya.s@university.edu',
+          department: 'Electronics',
+          description: 'The current lab hours (10AM-1PM) are insufficient for completing the circuit design projects. Requesting the lab to be accessible till 6PM on weekdays and also on Saturdays for students working on their final year projects.',
+          status: 'Resolved',
+          admin_response: 'Lab hours have been extended to 5PM on weekdays. Saturday access from 10AM-2PM is also now available. Students must register at the lab office.',
+          created_at: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),
+          updated_at: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
+        },
+        {
+          id: generateId(),
+          title: 'Staff behavior complaint at admin office',
+          category: 'Administrative',
+          priority: 'Medium',
+          name: 'Kavita Reddy',
+          email: 'kavita.r@university.edu',
+          department: 'Chemistry',
+          description: 'I visited the administrative office to collect my migration certificate and was met with extremely rude behavior from the front-desk staff. They were dismissive, uncooperative, and refused to give a timeline for the certificate processing despite my urgent need.',
+          status: 'In Progress',
+          admin_response: '',
+          created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+          updated_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString()
+        }
+      ];
+
+      const { error: insertError } = await db.from('grievances').insert(demoData);
+      if (insertError) {
+        console.error('Failed to seed demo data:', insertError);
       }
-    ];
-
-    grievances = demoData;
-    saveGrievances(grievances);
+    } catch (err) {
+      console.error('Seed demo data error:', err);
+    }
   }
 
   // ===== Initialize =====
@@ -1013,7 +1157,7 @@
   const existingSession = loadSession();
   if (existingSession) {
     currentUser = existingSession;
-    enterApp();
+    await enterApp();
   }
 
 })();
