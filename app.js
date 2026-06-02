@@ -124,6 +124,21 @@
     }
   }
 
+  async function deleteAdminFromDB(id) {
+    try {
+      const { error } = await db
+        .from('admins')
+        .delete()
+        .eq('id', id);
+      if (error) throw error;
+      return true;
+    } catch (err) {
+      console.error('Failed to delete admin:', err);
+      showToast('Failed to delete admin: ' + err.message, 'error');
+      return false;
+    }
+  }
+
   // ===== Local Data Cache =====
   let grievances = [];
   let admins = [];
@@ -733,8 +748,19 @@
       <tr>
         <td style="font-weight: 600; color: var(--text-primary);">${escapeHtml(a.username)}</td>
         <td class="table-date">${formatDateTime(a.created_at)}</td>
+        <td>
+          <button class="btn btn-sm btn-danger" data-action="delete-admin" data-id="${a.id}" data-username="${escapeHtml(a.username)}" style="padding: 4px 10px; font-size: 0.75rem;" ${currentUser && currentUser.name === a.username ? 'disabled title="Cannot delete yourself"' : ''}>Delete</button>
+        </td>
       </tr>
     `).join('');
+
+    tbody.querySelectorAll('[data-action="delete-admin"]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (!btn.disabled) {
+          deleteAdmin(btn.dataset.id, btn.dataset.username);
+        }
+      });
+    });
   }
 
   // Search admin accounts list (filters locally)
@@ -1023,6 +1049,25 @@
       showToast(`Grievance ${id} deleted`, 'warning');
       renderGrievancesTable();
       refreshDashboard();
+    }
+  }
+
+  async function deleteAdmin(id, username) {
+    if (!isAdmin()) return;
+
+    if (currentUser && currentUser.name === username) {
+      showToast('You cannot delete your own admin account.', 'error');
+      return;
+    }
+
+    if (!confirm(`Delete administrator account "${username}"?`)) return;
+
+    const success = await deleteAdminFromDB(id);
+
+    if (success) {
+      admins = admins.filter(a => a.id !== id);
+      showToast(`Administrator "${username}" deleted`, 'warning');
+      renderAdminsTableUI();
     }
   }
 
