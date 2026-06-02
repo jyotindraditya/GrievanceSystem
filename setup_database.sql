@@ -45,3 +45,10 @@ CREATE POLICY "Allow full access to grievances"
   ON grievances FOR ALL
   USING (true)
   WITH CHECK (true);
+
+-- 5. Grant table permissions to Supabase roles
+--    (required for INSERT/UPDATE/DELETE via the publishable key)
+GRANT ALL ON admins TO anon;
+GRANT ALL ON admins TO authenticated;
+GRANT ALL ON grievances TO anon;
+GRANT ALL ON grievances TO authenticated;
