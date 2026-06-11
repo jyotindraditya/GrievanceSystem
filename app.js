@@ -16,17 +16,14 @@
     loadingOverlay.classList.remove('active');
   }
 
-  // ===== Supabase Data Layer =====
-  // `db` is the Supabase client created in supabase.js
+  // ===== Spring Boot Backend API Data Layer =====
+  // `API_BASE_URL` is defined in supabase.js
 
   async function fetchGrievances() {
     try {
-      const { data, error } = await db
-        .from('grievances')
-        .select('*')
-        .order('created_at', { ascending: false });
-      if (error) throw error;
-      return data || [];
+      const response = await fetch(`${API_BASE_URL}/grievances`);
+      if (!response.ok) throw new Error('Network response was not ok');
+      return await response.json();
     } catch (err) {
       console.error('Failed to fetch grievances:', err);
       showToast('Failed to load grievances: ' + err.message, 'error');
@@ -36,12 +33,9 @@
 
   async function fetchAdminsForDisplay() {
     try {
-      const { data, error } = await db
-        .from('admins')
-        .select('id, username, created_at')
-        .order('created_at', { ascending: false });
-      if (error) throw error;
-      return data || [];
+      const response = await fetch(`${API_BASE_URL}/admins`);
+      if (!response.ok) throw new Error('Network response was not ok');
+      return await response.json();
     } catch (err) {
       console.error('Failed to fetch admins:', err);
       showToast('Failed to load admin accounts: ' + err.message, 'error');
@@ -51,13 +45,14 @@
 
   async function validateAdminLogin(username, password) {
     try {
-      const { data, error } = await db
-        .from('admins')
-        .select('username')
-        .ilike('username', username)
-        .eq('password', password);
-      if (error) throw error;
-      return data && data.length > 0;
+      const response = await fetch(`${API_BASE_URL}/admins/validate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+      if (!response.ok) throw new Error('Network response was not ok');
+      const data = await response.json();
+      return data.valid === true;
     } catch (err) {
       console.error('Admin login validation error:', err);
       showToast('Login error: ' + err.message, 'error');
@@ -67,8 +62,12 @@
 
   async function insertGrievanceToDB(grievance) {
     try {
-      const { error } = await db.from('grievances').insert([grievance]);
-      if (error) throw error;
+      const response = await fetch(`${API_BASE_URL}/grievances`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(grievance)
+      });
+      if (!response.ok) throw new Error('Failed to insert grievance');
       return true;
     } catch (err) {
       console.error('Failed to insert grievance:', err);
@@ -79,11 +78,12 @@
 
   async function updateGrievanceInDB(id, updates) {
     try {
-      const { error } = await db
-        .from('grievances')
-        .update(updates)
-        .eq('id', id);
-      if (error) throw error;
+      const response = await fetch(`${API_BASE_URL}/grievances/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates)
+      });
+      if (!response.ok) throw new Error('Failed to update grievance');
       return true;
     } catch (err) {
       console.error('Failed to update grievance:', err);
@@ -94,11 +94,10 @@
 
   async function deleteGrievanceFromDB(id) {
     try {
-      const { error } = await db
-        .from('grievances')
-        .delete()
-        .eq('id', id);
-      if (error) throw error;
+      const response = await fetch(`${API_BASE_URL}/grievances/${id}`, {
+        method: 'DELETE'
+      });
+      if (!response.ok) throw new Error('Failed to delete grievance');
       return true;
     } catch (err) {
       console.error('Failed to delete grievance:', err);
@@ -109,13 +108,19 @@
 
   async function insertAdminToDB(admin) {
     try {
-      const { error } = await db.from('admins').insert([admin]);
-      if (error) throw error;
+      const response = await fetch(`${API_BASE_URL}/admins`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(admin)
+      });
+      if (!response.ok) {
+        const errText = await response.text();
+        throw new Error(errText);
+      }
       return true;
     } catch (err) {
       console.error('Failed to register admin:', err);
-      // Check for unique constraint violation
-      if (err.code === '23505' || (err.message && err.message.includes('duplicate'))) {
+      if (err.message && err.message.includes('duplicate')) {
         showToast(`Username "${admin.username}" is already registered.`, 'error');
       } else {
         showToast('Failed to register admin: ' + err.message, 'error');
@@ -126,11 +131,10 @@
 
   async function deleteAdminFromDB(id) {
     try {
-      const { error } = await db
-        .from('admins')
-        .delete()
-        .eq('id', id);
-      if (error) throw error;
+      const response = await fetch(`${API_BASE_URL}/admins/${id}`, {
+        method: 'DELETE'
+      });
+      if (!response.ok) throw new Error('Failed to delete admin');
       return true;
     } catch (err) {
       console.error('Failed to delete admin:', err);
@@ -1098,12 +1102,8 @@
   async function seedDemoData() {
     try {
       // Check if any grievances exist
-      const { data, error } = await db
-        .from('grievances')
-        .select('id')
-        .limit(1);
-
-      if (error) throw error;
+      const response = await fetch(`${API_BASE_URL}/grievances`);
+      const data = response.ok ? await response.json() : null;
       if (data && data.length > 0) return; // Table is not empty
 
       const demoData = [
@@ -1193,9 +1193,12 @@
         }
       ];
 
-      const { error: insertError } = await db.from('grievances').insert(demoData);
-      if (insertError) {
-        console.error('Failed to seed demo data:', insertError);
+      for (const item of demoData) {
+        await fetch(`${API_BASE_URL}/grievances`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(item)
+        });
       }
     } catch (err) {
       console.error('Seed demo data error:', err);
